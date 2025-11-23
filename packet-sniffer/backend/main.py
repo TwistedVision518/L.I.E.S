@@ -1,7 +1,7 @@
-from flask import Flask, send_file
+from flask import Flask, send_file, request
 from flask_socketio import SocketIO
 from flask_cors import CORS
-from scapy.all import sniff, IP, TCP, UDP, conf, Raw
+from scapy.all import sniff, IP, TCP, UDP, conf, Raw, rdpcap
 from scapy.utils import PcapWriter
 import threading
 import json
@@ -12,6 +12,8 @@ import re
 import requests
 import ipaddress
 import os
+from threat_intel import ThreatIntel
+from ml_engine import AnomalyDetector
 
 # Force Scapy to use Layer 3 socket (works better without full Npcap driver)
 conf.L3socket = conf.L3socket
@@ -145,15 +147,19 @@ class ThreatDetector:
 
 detector = ThreatDetector()
 geo_locator = GeoLocator()
+threat_intel = ThreatIntel()
+ml_engine = AnomalyDetector()
 
 def packet_callback(packet):
     global pcap_writer
-    if not is_capturing:
-        return
-
+    # Allow callback to run if we are replaying, even if is_capturing is False
+    # But for live capture, we check is_capturing.
+    # We'll handle this by checking if we are in a replay context or live context.
+    # For simplicity, we'll just run it. The sniff function controls the live loop.
+    
     try:
-        # Write to PCAP
-        if pcap_writer:
+        # Write to PCAP only if live capturing
+        if is_capturing and pcap_writer:
             pcap_writer.write(packet)
 
         # Basic parsing
@@ -208,8 +214,19 @@ def packet_callback(packet):
         # Emit packet
         socketio.emit('packet', packet_data)
 
-        # Analyze for threats
+        # Analyze for threats (Rule-based)
         alerts = detector.analyze(packet_data, raw_payload)
+        
+        # Check Threat Intel (Blocklist)
+        intel_alert = threat_intel.check_ip(packet_data.get("dst", ""))
+        if intel_alert:
+            alerts.append(intel_alert)
+
+        # Check ML Anomaly (AI)
+        ml_alert = ml_engine.analyze(packet_data)
+        if ml_alert:
+            alerts.append(ml_alert)
+            
         for alert in alerts:
             logger.warning(f"THREAT DETECTED: {alert['message']}")
             socketio.emit('threat', alert)
@@ -218,7 +235,7 @@ def packet_callback(packet):
         logger.error(f"Error parsing packet: {e}")
 
 def start_sniffing():
-    global is_capturing
+    global is_capturing, pcap_writer
     logger.info("Starting packet capture...")
     
     # Debug: List interfaces
@@ -237,6 +254,32 @@ def start_sniffing():
             pcap_writer = None
         socketio.emit('status', {'is_capturing': False})
         logger.info("Packet capture stopped.")
+
+def replay_pcap(filename):
+    logger.info(f"Starting replay of {filename}...")
+    try:
+        packets = rdpcap(filename)
+        for packet in packets:
+            packet_callback(packet)
+            time.sleep(0.1) # Simulate delay (slower for stability)
+        logger.info("Replay finished.")
+    except Exception as e:
+        logger.error(f"Error replaying PCAP: {e}")
+
+@app.route('/api/upload_pcap', methods=['POST'])
+def upload_pcap():
+    if 'file' not in request.files:
+        return "No file part", 400
+    file = request.files['file']
+    if file.filename == '':
+        return "No selected file", 400
+    
+    if file:
+        filename = "replay.pcap"
+        file.save(filename)
+        # Start replay in background
+        socketio.start_background_task(replay_pcap, filename)
+        return "Replay started", 200
 
 @app.route('/api/download_pcap')
 def download_pcap():

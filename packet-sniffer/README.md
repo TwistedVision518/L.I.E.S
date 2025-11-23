@@ -11,15 +11,19 @@
 
 ## 🚀 Features
 
-### 🛡️ **AI Sentinel Threat Detection**
-- Real-time analysis of packet headers to detect suspicious patterns.
-- Alerts for potential port scans, clear-text credentials, and high-frequency traffic.
-- Visual threat level indicators (Safe, High, Critical).
+### 🛡️ **AI Sentinel & Threat Intelligence**
+- **ML Anomaly Detection**: Uses `IsolationForest` (Machine Learning) to learn normal traffic patterns and flag anomalies (e.g., unusual packet sizes or ports).
+- **Threat Intelligence**: Automatically checks destination IPs against the **FireHOL Level 1** blocklist to detect known malicious actors (C2 servers, botnets).
+- **Real-time Alerts**: Visual indicators for Critical, High, and Medium threats.
 
 ### 🌍 **Live Cyber Attack Map**
 - Interactive 3D-style world map visualizing active network connections.
 - Real-time geolocation of destination IP addresses.
 - Dynamic connection lines and pulsing nodes indicating traffic intensity.
+
+### 📼 **Offline PCAP Replay**
+- **Upload & Replay**: Upload existing `.pcap` files (from Wireshark or previous captures) and watch them replay on the dashboard as if they were live.
+- **Forensic Analysis**: Analyze past incidents using the full suite of L.I.E.S. tools.
 
 ### 📦 **Deep Packet Inspection**
 - Detailed breakdown of every captured packet.
@@ -30,10 +34,6 @@
 - Live traffic rate charts showing data throughput over time.
 - Protocol distribution statistics (TCP vs UDP vs Other).
 - Real-time packet buffering and infinite scroll management.
-
-### 💾 **PCAP Export**
-- Record your session and export captured traffic to `.pcap` format.
-- Compatible with Wireshark for further analysis.
 
 ---
 
@@ -52,6 +52,8 @@
 - **Flask** (Web Server)
 - **Flask-SocketIO** (WebSocket Server)
 - **Scapy** (Packet Sniffing & Manipulation)
+- **Scikit-learn** (Machine Learning Engine)
+- **Pandas & NumPy** (Data Processing)
 - **Eventlet** (Async Networking)
 
 ---

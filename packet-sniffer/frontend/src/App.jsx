@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { io } from 'socket.io-client';
-import { Play, Square, Shield, Globe, Wifi, Search, Filter, Activity, AlertOctagon, Download } from 'lucide-react';
+import { Play, Square, Shield, Globe, Wifi, Search, Filter, Activity, AlertOctagon, Download, Upload } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import StatsPanel from './components/StatsPanel';
 import PacketList from './components/PacketList';
@@ -37,7 +37,7 @@ const App = () => {
         socket.on('packet', (packet) => {
             setPackets(prev => {
                 const newPackets = [...prev, packet];
-                if (newPackets.length > 2000) newPackets.shift();
+                if (newPackets.length > 1000) newPackets.shift();
                 return newPackets;
             });
 
@@ -101,6 +101,25 @@ const App = () => {
         window.open('http://localhost:5001/api/download_pcap', '_blank');
     };
 
+    const handleFileUpload = async (event) => {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const formData = new FormData();
+        formData.append('file', file);
+
+        try {
+            await fetch('http://localhost:5001/api/upload_pcap', {
+                method: 'POST',
+                body: formData,
+            });
+            alert("Replay started! Watch the dashboard.");
+        } catch (error) {
+            console.error("Upload failed:", error);
+            alert("Upload failed");
+        }
+    };
+
     // Filter Logic
     const filteredPackets = useMemo(() => {
         if (!filterText) return packets;
@@ -147,6 +166,24 @@ const App = () => {
                             value={filterText}
                             onChange={(e) => setFilterText(e.target.value)}
                         />
+                    </div>
+
+                    {/* Upload PCAP Button */}
+                    <div className="relative">
+                        <input
+                            type="file"
+                            id="pcap-upload"
+                            className="hidden"
+                            accept=".pcap,.pcapng"
+                            onChange={handleFileUpload}
+                        />
+                        <label
+                            htmlFor="pcap-upload"
+                            className="flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold bg-purple-500/10 text-purple-400 border border-purple-500/30 hover:bg-purple-500/20 transition-all cursor-pointer"
+                            title="Upload .pcap to Replay"
+                        >
+                            <Upload size={14} /> REPLAY .PCAP
+                        </label>
                     </div>
 
                     <button
@@ -230,7 +267,7 @@ const App = () => {
                     onPacketClick={setSelectedPacket}
                 />
                 <div className="text-right text-[10px] text-gray-600 mt-2 font-mono">
-                    BUFFER: {packets.length} / 2000 PACKETS
+                    BUFFER: {packets.length} / 1000 PACKETS
                 </div>
             </div>
 

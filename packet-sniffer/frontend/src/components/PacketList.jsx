@@ -30,7 +30,7 @@ const PacketList = ({ packets, onPacketClick }) => {
     return (
         <div className="flex-1 bg-black/40 backdrop-blur-md border border-green-500/30 rounded-lg overflow-hidden flex flex-col shadow-[0_0_15px_rgba(0,255,0,0.05)] relative">
             {/* Header */}
-            <div className="grid grid-cols-12 gap-2 px-4 py-3 bg-black/80 border-b border-green-500/30 text-xs font-bold text-green-500 tracking-wider">
+            <div className="grid grid-cols-12 gap-2 px-4 py-3 bg-black/80 border-b border-green-500/30 text-xs font-bold text-green-500 tracking-wider flex-none">
                 <div className="col-span-2">TIME</div>
                 <div className="col-span-2">SOURCE</div>
                 <div className="col-span-2">DESTINATION</div>
@@ -59,8 +59,8 @@ const PacketList = ({ packets, onPacketClick }) => {
                             <div className="col-span-2 truncate text-yellow-300" title={packet.geo}>{packet.geo || '-'}</div>
                             <div className="col-span-1">
                                 <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${packet.proto === 'TCP' ? 'bg-blue-900/50 text-blue-200 border border-blue-500/30' :
-                                        packet.proto === 'UDP' ? 'bg-green-900/50 text-green-200 border border-green-500/30' :
-                                            'bg-gray-700/50 text-gray-300 border border-gray-500/30'
+                                    packet.proto === 'UDP' ? 'bg-green-900/50 text-green-200 border border-green-500/30' :
+                                        'bg-gray-700/50 text-gray-300 border border-gray-500/30'
                                     }`}>
                                     {packet.proto}
                                 </span>

@@ -8,7 +8,9 @@ const CyberMap = ({ packets }) => {
     // Aggregate packets by destination to avoid drawing too many identical lines
     const connections = useMemo(() => {
         const map = new Map();
-        packets.forEach(p => {
+        // Only visualize the last 50 packets to prevent lag
+        const recentPackets = packets.slice(-50);
+        recentPackets.forEach(p => {
             if (p.lat && p.lon) {
                 const key = `${p.lat},${p.lon}`;
                 if (!map.has(key)) {
